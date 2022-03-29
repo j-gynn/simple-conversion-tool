@@ -51,7 +51,6 @@ namespace COMP1003
                 public Unit unit1;
                 public Unit unit2;
                 public double value;
-                public double valueSI;
                 public double answer;
             }
 
@@ -69,14 +68,14 @@ namespace COMP1003
             List<Unit> Units = new List<Unit>();
 
 
-            public double[] answer;
+            public string answer;
 
             public void initialise()
             {
                 Units.Add(new Unit() { name = "error", category = -1, SIconvert = 0 }); 
                 
                 Units.Add(new Unit() { name = "kilogram", category = 1, SIconvert = 1 });
-                Units.Add(new Unit() { name = "gram", category = 1, SIconvert = 0.001  });
+                Units.Add(new Unit() { name = "gram", category = 1, SIconvert = 0.001 });
                 Units.Add(new Unit() { name = "imperialton", displayname = "imperial ton", category = 1, SIconvert = 1016.05 });
                 Units.Add(new Unit() { name = "uston", displayname = "US ton", category = 1, SIconvert = 907.185 });
                 Units.Add(new Unit() { name = "stone", category = 1, SIconvert = 6.35029 });
@@ -108,14 +107,25 @@ namespace COMP1003
 
             public void readInput(string url)
             {
-                using (StreamReader reader = new StreamReader(url))
+                Conversions.Clear();
+                answer = "";
+                try
                 {
-                    string line;
-                    while ((line = reader.ReadLine()) != null)
+                    using (StreamReader reader = new StreamReader(url))
                     {
-                        Conversions.Add(new Operation() { rawInput = line });
+                        string line;
+                        while ((line = reader.ReadLine()) != null)
+                        {
+                            Conversions.Add(new Operation() { rawInput = line });
+                        }
+                        FL = Conversions.Count;
                     }
-                    FL = Conversions.Count;
+                } 
+                //if we get here, we must be dealing with a single input from the user
+                catch
+                {
+                    Conversions.Add(new Operation() { rawInput = url });
+                    FL = 1;
                 }
             }
 
@@ -126,28 +136,23 @@ namespace COMP1003
                 {
                     separated = Conversions[i].rawInput.Split(',');
 
-                    for (int j = 0; j > 3; j++)
+                    for (int j = 0; j < 3; j++)
                     {
-                        separated[i] = separated[i].Trim().ToLower();
+                        separated[j] = separated[j].Trim().ToLower();
 
                     }
 
-                    try
-                    {
-                        Conversions[i].unit1 = Units.Find(x => x.name.Equals(separated[0]));
-                    } catch
-                    {
+                    
+                    Conversions[i].unit1 = Units.Find(x => x.name.Equals(separated[0]));
+                    Conversions[i].unit2 = Units.Find(x => x.name.Equals(separated[1]));
+
+                    if (Conversions[i].unit1 == null) {
                         Conversions[i].unit1 = Units[0];
                     }
-
-                    try
-                    {
-                        Conversions[i].unit2 = Units.Find(x => x.name.Equals(separated[1]));
-                    } catch
+                    if (Conversions[i].unit2 == null)
                     {
                         Conversions[i].unit2 = Units[0];
                     }
-
 
 
                     Conversions[i].value = Convert.ToDouble(separated[2]);
@@ -159,22 +164,27 @@ namespace COMP1003
                 for (int i = 0; i < FL; i++)
                 {
                     //if either of the units were unrecognised
-                    if ( Conversions[i].unit1.name == "error" || Conversions[i].unit1.name == "error")
+                    if ( Conversions[i].unit1.name == "error" || Conversions[i].unit2.name == "error")
                     {
-                        answer[i] = -2;
-                        break;
-                    }
+                        Conversions[i].answer = -2;
 
-                    //if the type of unit does not match
-                    if (Conversions[i].unit1.category != Conversions[i].unit2.category)
+                        answer += "Cannot calculate: one or both units not recognised\n";
+                        
+                    }//if the type of unit does not match
+                    else if (Conversions[i].unit1.category != Conversions[i].unit2.category)
                     {
-                        answer[i] = -1;
+                        Conversions[i].answer = -1;
+
+                        answer += "Cannot calculate: units are incompatible\n";
                         break;
+                    } else
+                    {
+                        Conversions[i].answer = (Conversions[i].value * Conversions[i].unit1.SIconvert) / Conversions[i].unit2.SIconvert;
+                        answer += Conversions[i].value.ToString() + " " + Conversions[i].unit1.name + "s are " + Conversions[i].answer + " " + Conversions[i].unit2.name + "s\n";
                     }
-
-                    answer[i] = (Conversions[i].value * Conversions[i].unit1.SIconvert) / Conversions[i].unit2.SIconvert;
-
                 }
+                Console.Write(Environment.NewLine);
+                Console.Write(answer);
             }
         }
 
@@ -189,12 +199,18 @@ namespace COMP1003
 
             converter.readInput("convert.txt");
             converter.separate();
-
-
-            string input = converter.getInput();
-            converter.readInput(input);
-            converter.separate();
             converter.convert();
+
+            while (true)
+            {
+                Console.WriteLine(Environment.NewLine);
+                Console.WriteLine("Please enter your conversion:");
+                string input = converter.getInput();
+                converter.readInput(input);
+                converter.separate();
+                converter.convert();
+            }
+            
         }
     }
 }
