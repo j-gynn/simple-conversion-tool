@@ -1,0 +1,5 @@
+ounce,gram,28.0
+pound, ounce, 16.0
+ pound, kilogram,   0.454    
+pint,lirer,0.568
+inch,gram,23.2
