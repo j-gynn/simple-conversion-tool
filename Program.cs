@@ -51,6 +51,7 @@ namespace COMP1003
                 public Unit unit2;
                 public double value;
                 public double answer;
+                public bool userInput;
             }
 
             //The array that stores all inputted values
@@ -58,10 +59,10 @@ namespace COMP1003
 
             public class Unit
             {
-                public string name = "";
-                public string displayname = "";
-                public int category = -2;
-                public double SIconvert = -2;
+                public string name;
+                public string displayname;
+                public int category;
+                public double SIconvert;
 
             }
 
@@ -106,24 +107,27 @@ namespace COMP1003
                 string line;
                 string block = "";
                 string[] rawInput;
+                bool userinput = false;
                 try
                 {
                     using (StreamReader reader = new StreamReader(url))
                     {
                         while ((line = reader.ReadLine()) != null)
                         {
-                            block += line + "/";
+                            block += line + "_";
                             FL++;
                         }
                     }
-                    rawInput = block.Split('/');
+                    rawInput = block.Split('_');
                 } 
-                //if we get here, we must be dealing with a single input from the user
+                //if we get here, we may be dealing with a single input from the user
+                //we will attempt to process it as such
                 catch
                 {
                     rawInput = new string[1];
                     rawInput[0] = url;
                     FL = 1;
+                    userinput = true;
                 }
 
                 Conversions = new Operation[FL];
@@ -132,12 +136,26 @@ namespace COMP1003
                 {
                     Conversions[i] = new Operation();
                     Conversions[i].rawInput = rawInput[i];
+                    if (userinput)
+                    {
+                        Conversions[i].userInput = true;
+                    }
                 }
             }
 
             public void separate()
             {
                 string[] separated;
+                int unit1pos = 0;
+                int unit2pos = 1;
+                int valuepos = 2;
+
+                if (Conversions[0].userInput)
+                {
+                    valuepos = 0;
+                    unit1pos = 1;
+                    unit2pos = 2;
+                }
                 for (int i = 0; i < FL; i++)
                 {
                     separated = Conversions[i].rawInput.Split(',');
@@ -148,18 +166,21 @@ namespace COMP1003
 
                     }
 
+                    //iterating through the known units to find the ones we need
                     for (int j = 0; j < Units.Length; j++)
                     {
-                        if (separated[0] == Units[j].name)
+                        if (separated[unit1pos] == Units[j].name)
                         {
                             Conversions[i].unit1 = Units[j];
                         }
-                        if (separated[1] == Units[j].name)
+                        if (separated[unit2pos] == Units[j].name)
                         {
                             Conversions[i].unit2 = Units[j];
                         }
                     }
 
+                    //if a match for the units couldn't be found, set them to the error unit to allow normal procedure to continue
+                    //this will be corrected for at the end
                     if (Conversions[i].unit1 == null) {
                         Conversions[i].unit1 = Units[0];
                     }
@@ -168,7 +189,7 @@ namespace COMP1003
                         Conversions[i].unit2 = Units[0];
                     }
 
-                    Conversions[i].value = Convert.ToDouble(separated[2]);
+                    Conversions[i].value = Convert.ToDouble(separated[valuepos]);
                 }
             }
 
@@ -196,7 +217,9 @@ namespace COMP1003
                         string unit2;
                         Conversions[i].answer = (Conversions[i].value * Conversions[i].unit1.SIconvert) / Conversions[i].unit2.SIconvert;
 
-                        if (Conversions[i].unit1.displayname != "")
+                        //for display purposes, if one of the unit names normally has a space (such as imperial ton) and/or capital letters (as in US ton), it can be replaced here
+                        //I know there's no points awarded for this, it was just bugging me personally. don't get me started on the pluralisation stuff.
+                        if (Conversions[i].unit1.displayname != null)
                         {
                             unit1 = Conversions[i].unit1.displayname;
                         } else
@@ -204,7 +227,7 @@ namespace COMP1003
                             unit1 = Conversions[i].unit1.name;
                         }
 
-                        if (Conversions[i].unit2.displayname != "")
+                        if (Conversions[i].unit2.displayname != null)
                         {
                             unit2 = Conversions[i].unit2.displayname;
                         }
@@ -216,7 +239,6 @@ namespace COMP1003
                         answer += Conversions[i].value.ToString() + " " + unit1 + "s are " + Conversions[i].answer + " " + unit2 + "s\n";
                     }
                 }
-                Console.Write(Environment.NewLine);
                 Console.Write(answer);
             }
         }
