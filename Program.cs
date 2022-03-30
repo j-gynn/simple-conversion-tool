@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Collections.Generic;
 
 namespace COMP1003
 {
@@ -54,52 +53,48 @@ namespace COMP1003
                 public double answer;
             }
 
-            List<Operation> Conversions = new List<Operation>();
+            //The array that stores all inputted values
+            Operation[] Conversions;
 
             public class Unit
             {
-                public string name;
-                public string displayname;
-                public int category;
-                public double SIconvert;
+                public string name = "";
+                public string displayname = "";
+                public int category = -2;
+                public double SIconvert = -2;
 
             }
 
-            List<Unit> Units = new List<Unit>();
+            readonly Unit[] Units = {
+                new Unit() { name = "error", category = -1, SIconvert = 0 },
+                new Unit() { name = "kilogram", category = 1, SIconvert = 1 },
+                new Unit() { name = "gram", category = 1, SIconvert = 0.001 },
+                new Unit() { name = "imperialton", displayname = "Imperial ton", category = 1, SIconvert = 1016.05 },
+                new Unit() { name = "uston", displayname = "US ton", category = 1, SIconvert = 907.185 },
+                new Unit() { name = "stone", category = 1, SIconvert = 6.35029 },
+                new Unit() { name = "pound", category = 1, SIconvert = 0.453592 },
+                new Unit() { name = "ounce", category = 1, SIconvert = 0.0283495 },
+
+                new Unit() { name = "meter", category = 2, SIconvert = 1 },
+                new Unit() { name = "kilometer", category = 2, SIconvert = 1000 },
+                new Unit() { name = "centimeter", category = 2, SIconvert = 0.01 },
+                new Unit() { name = "millimeter", category = 2, SIconvert = 0.001 },
+                new Unit() { name = "mile", category = 2, SIconvert = 1609.34 },
+                new Unit() { name = "yard", category = 2, SIconvert = 0.9144 },
+                new Unit() { name = "foot", category = 2, SIconvert = 0.3048 },
+                new Unit() { name = "inch", category = 2, SIconvert = 0.0254 },
+                new Unit() { name = "nauticalmile", displayname = "nautical mile", category = 2, SIconvert = 1852 },
+                new Unit() { name = "furlong", category = 2, SIconvert = 0.00497096 },
+                new Unit() { name = "chain", category = 2, SIconvert = 20.1168 },
+                new Unit() { name = "rod", category = 2, SIconvert = 5.0292 },
+                new Unit() { name = "link", category = 2, SIconvert = 0.201168 },
+                new Unit() { name = "hand", category = 2, SIconvert = 0.1016 }
+        };
 
 
             public string answer;
 
-            public void initialise()
-            {
-                Units.Add(new Unit() { name = "error", category = -1, SIconvert = 0 }); 
-                
-                Units.Add(new Unit() { name = "kilogram", category = 1, SIconvert = 1 });
-                Units.Add(new Unit() { name = "gram", category = 1, SIconvert = 0.001 });
-                Units.Add(new Unit() { name = "imperialton", displayname = "imperial ton", category = 1, SIconvert = 1016.05 });
-                Units.Add(new Unit() { name = "uston", displayname = "US ton", category = 1, SIconvert = 907.185 });
-                Units.Add(new Unit() { name = "stone", category = 1, SIconvert = 6.35029 });
-                Units.Add(new Unit() { name = "pound", category = 1, SIconvert = 0.453592 });
-                Units.Add(new Unit() { name = "ounce", category = 1, SIconvert = 0.0283495 });
-
-                Units.Add(new Unit() { name = "meter", category = 2, SIconvert = 1 });
-                Units.Add(new Unit() { name = "kilometer", category = 2, SIconvert = 1000 });
-                Units.Add(new Unit() { name = "centimeter", category = 2, SIconvert = 0.01 });
-                Units.Add(new Unit() { name = "millimeter", category = 2, SIconvert = 0.001 });
-                Units.Add(new Unit() { name = "mile", category = 2, SIconvert = 1609.34 });
-                Units.Add(new Unit() { name = "yard", category = 2, SIconvert = 0.9144 });
-                Units.Add(new Unit() { name = "foot", category = 2, SIconvert = 0.3048 });
-                Units.Add(new Unit() { name = "inch", category = 2, SIconvert = 0.0254 });
-                Units.Add(new Unit() { name = "nauticalmile", displayname = "nautical mile", category = 2, SIconvert = 1852 });
-                Units.Add(new Unit() { name = "furlong", category = 2, SIconvert = 0.00497096 });
-                Units.Add(new Unit() { name = "chain", category = 2, SIconvert = 20.1168 });
-                Units.Add(new Unit() { name = "rod", category = 2, SIconvert = 5.0292 });
-                Units.Add(new Unit() { name = "link", category = 2, SIconvert = 0.201168 });
-                Units.Add(new Unit() { name = "hand", category = 2, SIconvert = 0.1016 });
-
-
-            }
-
+            
             public string getInput()
             {
                 return Console.ReadLine();
@@ -107,25 +102,36 @@ namespace COMP1003
 
             public void readInput(string url)
             {
-                Conversions.Clear();
                 answer = "";
+                string line;
+                string block = "";
+                string[] rawInput;
                 try
                 {
                     using (StreamReader reader = new StreamReader(url))
                     {
-                        string line;
                         while ((line = reader.ReadLine()) != null)
                         {
-                            Conversions.Add(new Operation() { rawInput = line });
+                            block += line + "/";
+                            FL++;
                         }
-                        FL = Conversions.Count;
                     }
+                    rawInput = block.Split('/');
                 } 
                 //if we get here, we must be dealing with a single input from the user
                 catch
                 {
-                    Conversions.Add(new Operation() { rawInput = url });
+                    rawInput = new string[1];
+                    rawInput[0] = url;
                     FL = 1;
+                }
+
+                Conversions = new Operation[FL];
+
+                for (int i = 0; i < FL; i++)
+                {
+                    Conversions[i] = new Operation();
+                    Conversions[i].rawInput = rawInput[i];
                 }
             }
 
@@ -142,9 +148,17 @@ namespace COMP1003
 
                     }
 
-                    
-                    Conversions[i].unit1 = Units.Find(x => x.name.Equals(separated[0]));
-                    Conversions[i].unit2 = Units.Find(x => x.name.Equals(separated[1]));
+                    for (int j = 0; j < Units.Length; j++)
+                    {
+                        if (separated[0] == Units[j].name)
+                        {
+                            Conversions[i].unit1 = Units[j];
+                        }
+                        if (separated[1] == Units[j].name)
+                        {
+                            Conversions[i].unit2 = Units[j];
+                        }
+                    }
 
                     if (Conversions[i].unit1 == null) {
                         Conversions[i].unit1 = Units[0];
@@ -153,7 +167,6 @@ namespace COMP1003
                     {
                         Conversions[i].unit2 = Units[0];
                     }
-
 
                     Conversions[i].value = Convert.ToDouble(separated[2]);
                 }
@@ -179,8 +192,28 @@ namespace COMP1003
                         break;
                     } else
                     {
+                        string unit1;
+                        string unit2;
                         Conversions[i].answer = (Conversions[i].value * Conversions[i].unit1.SIconvert) / Conversions[i].unit2.SIconvert;
-                        answer += Conversions[i].value.ToString() + " " + Conversions[i].unit1.name + "s are " + Conversions[i].answer + " " + Conversions[i].unit2.name + "s\n";
+
+                        if (Conversions[i].unit1.displayname != "")
+                        {
+                            unit1 = Conversions[i].unit1.displayname;
+                        } else
+                        {
+                            unit1 = Conversions[i].unit1.name;
+                        }
+
+                        if (Conversions[i].unit2.displayname != "")
+                        {
+                            unit2 = Conversions[i].unit2.displayname;
+                        }
+                        else
+                        {
+                            unit2 = Conversions[i].unit2.name;
+                        }
+
+                        answer += Conversions[i].value.ToString() + " " + unit1 + "s are " + Conversions[i].answer + " " + unit2 + "s\n";
                     }
                 }
                 Console.Write(Environment.NewLine);
@@ -195,7 +228,6 @@ namespace COMP1003
         static void Main(string[] args)
         {
             Converter converter = new Converter();
-            converter.initialise();
 
             converter.readInput("convert.txt");
             converter.separate();
