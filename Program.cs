@@ -43,6 +43,9 @@ namespace COMP1003
             //file length
             private int FL = 0;
 
+            //whether the program should ask for further input
+            public bool active = true;
+
             //The class for a single input
             public class Operation
             {
@@ -68,9 +71,10 @@ namespace COMP1003
 
             readonly Unit[] Units = {
                 new Unit() { name = "error", category = -1, SIconvert = 0 },
+
                 new Unit() { name = "kilogram", category = 1, SIconvert = 1 },
                 new Unit() { name = "gram", category = 1, SIconvert = 0.001 },
-                new Unit() { name = "imperialton", displayname = "Imperial ton", category = 1, SIconvert = 1016.05 },
+                new Unit() { name = "ton", category = 1, SIconvert = 1016.05 },
                 new Unit() { name = "uston", displayname = "US ton", category = 1, SIconvert = 907.185 },
                 new Unit() { name = "stone", category = 1, SIconvert = 6.35029 },
                 new Unit() { name = "pound", category = 1, SIconvert = 0.453592 },
@@ -89,7 +93,18 @@ namespace COMP1003
                 new Unit() { name = "chain", category = 2, SIconvert = 20.1168 },
                 new Unit() { name = "rod", category = 2, SIconvert = 5.0292 },
                 new Unit() { name = "link", category = 2, SIconvert = 0.201168 },
-                new Unit() { name = "hand", category = 2, SIconvert = 0.1016 }
+                new Unit() { name = "hand", category = 2, SIconvert = 0.1016 },
+
+                new Unit() { name = "liter", category = 3, SIconvert = 1 },
+                new Unit() { name = "pint", category = 3, SIconvert = 0.568261 },
+                new Unit() { name = "cup", category =3, SIconvert = 0.2841304749995838 },
+                new Unit() { name = "quart", category = 3, SIconvert = 1.136521999998291399},
+                new Unit() { name = "tablespoon", category = 3, SIconvert = 0.017758163587470073008},
+                new Unit() { name = "teaspoon", category = 3, SIconvert = 0.0059193878628233569453}
+
+
+
+
         };
 
 
@@ -156,11 +171,19 @@ namespace COMP1003
                     unit1pos = 1;
                     unit2pos = 2;
                 }
+
                 for (int i = 0; i < FL; i++)
                 {
                     separated = Conversions[i].rawInput.Split(',');
 
-                    for (int j = 0; j < 3; j++)
+                    if (separated.Length < 3)
+                    {
+                        Console.WriteLine("Error! Unable to parse input.");
+                        Conversions[i].answer = -4;
+                        break;
+                    }
+
+                    for (int j = 0; j < separated.Length; j++)
                     {
                         separated[j] = separated[j].Trim().ToLower();
 
@@ -197,22 +220,46 @@ namespace COMP1003
             {
                 for (int i = 0; i < FL; i++)
                 {
-                    //if either of the units were unrecognised
-                    if ( Conversions[i].unit1.name == "error" || Conversions[i].unit2.name == "error")
+                    //if there was a parsing issue in the previous stage
+                    if (Conversions[i].answer == -4)
+                    {
+                        break;
+                    }
+                    //if the input value is less than zero
+                    else if (Conversions[i].value <= 0)
+                    {
+                        Conversions[i].answer = -3;
+
+
+
+                        //if this was submitted by a user, exit the program
+                        if (Conversions[i].userInput)
+                        {
+                            answer += "Program exiting.\n";
+                            active = false;
+                        }
+                        else
+                        {
+                            answer += "Cannot calculate: value is less than zero\n";
+                        }
+
+                    }
+                    //if either of the units were unrecognised 
+                    else if ( Conversions[i].unit1.name == "error" || Conversions[i].unit2.name == "error")
                     {
                         Conversions[i].answer = -2;
 
                         answer += "Cannot calculate: one or both units not recognised\n";
                         
-                    }//if the type of unit does not match
+                    }
+                    //if the type of unit does not match
                     else if (Conversions[i].unit1.category != Conversions[i].unit2.category)
                     {
                         Conversions[i].answer = -1;
 
                         answer += "Cannot calculate: units are incompatible\n";
-                        break;
-                    } else
-                    {
+                    } 
+                   else {
                         string unit1;
                         string unit2;
                         Conversions[i].answer = (Conversions[i].value * Conversions[i].unit1.SIconvert) / Conversions[i].unit2.SIconvert;
@@ -255,7 +302,7 @@ namespace COMP1003
             converter.separate();
             converter.convert();
 
-            while (true)
+            while (converter.active)
             {
                 Console.WriteLine(Environment.NewLine);
                 Console.WriteLine("Please enter your conversion:");
@@ -264,7 +311,7 @@ namespace COMP1003
                 converter.separate();
                 converter.convert();
             }
-            
+            Console.WriteLine("\nGoodbye!");
         }
     }
 }
