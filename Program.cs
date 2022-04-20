@@ -68,7 +68,7 @@ namespace COMP1003
                 public double SIconvert;
 
             }
-
+            //dictionary of all recognised units
             readonly Unit[] Units = {
                 new Unit() { name = "error", category = -1, SIconvert = 0 },
 
@@ -101,21 +101,18 @@ namespace COMP1003
                 new Unit() { name = "quart", category = 3, SIconvert = 1.136521999998291399},
                 new Unit() { name = "tablespoon", category = 3, SIconvert = 0.017758163587470073008},
                 new Unit() { name = "teaspoon", category = 3, SIconvert = 0.0059193878628233569453}
-
-
-
-
         };
 
 
             public string answer;
 
-            
+            //function used to get user input
             public string getInput()
             {
                 return Console.ReadLine();
             }
-
+            
+            //function interprets user input and converts it to an array of Operations
             public void readInput(string url)
             {
                 answer = "";
@@ -137,6 +134,7 @@ namespace COMP1003
                 } 
                 //if we get here, we may be dealing with a single input from the user
                 //we will attempt to process it as such
+                //if it is a bad URL, then the parsing error will be thrown later
                 catch
                 {
                     rawInput = new string[1];
@@ -158,6 +156,10 @@ namespace COMP1003
                 }
             }
 
+            //breaks each Operation into its units and value
+            //checks we have three pieces (and throws appropriate errors if we don't)
+            //finds each unit in the Units array
+            //finally checks the value we're converting is positive (and throws appropriate error if it isn't)
             public void separate()
             {
                 string[] separated;
@@ -165,6 +167,7 @@ namespace COMP1003
                 int unit2pos = 1;
                 int valuepos = 2;
 
+                //changing the order of expected inputs if it is user input
                 if (Conversions[0].userInput)
                 {
                     valuepos = 0;
@@ -176,43 +179,83 @@ namespace COMP1003
                 {
                     separated = Conversions[i].rawInput.Split(',');
 
-                    if (separated.Length < 3)
-                    {
-                        Console.WriteLine("Error! Unable to parse input.");
-                        Conversions[i].answer = -4;
-                        break;
-                    }
-
                     for (int j = 0; j < separated.Length; j++)
                     {
                         separated[j] = separated[j].Trim().ToLower();
-
                     }
 
-                    //iterating through the known units to find the ones we need
-                    for (int j = 0; j < Units.Length; j++)
+                    if (separated.Length != 3)
                     {
-                        if (separated[unit1pos] == Units[j].name)
+                        for (int j = 0; j < separated.Length; j++)
                         {
-                            Conversions[i].unit1 = Units[j];
+                            int result;
+                            //if the input was from the user
+                            if (Conversions[i].userInput)
+                            {
+                                //if the input is an integer
+                                if (int.TryParse(separated[j], out result))
+                                {
+                                    //if the integer is less than 0
+                                    if (result <= 0)
+                                    {
+                                        Conversions[i].answer = -3;
+                                        break;
+                                    }
+                                }                                
+                            } 
+                            //if it's not user input, then it's incorrectly parsed
+                            else
+                            {
+                                Conversions[i].answer = -4;
+                            }
                         }
-                        if (separated[unit2pos] == Units[j].name)
+                        if (Conversions[i].answer != -3)
                         {
-                            Conversions[i].unit2 = Units[j];
+                            //if none of the parts meet this specification, throw a parsing error and skip
+                            Conversions[i].answer = -4;
+                        }
+                    } 
+                    else {
+                        //iterating through the known units to find the ones we need
+                        for (int j = 0; j < Units.Length; j++)
+                        {
+                            if (separated[unit1pos] == Units[j].name)
+                            {
+                                Conversions[i].unit1 = Units[j];
+                            }
+                            if (separated[unit2pos] == Units[j].name)
+                            {
+                                Conversions[i].unit2 = Units[j];
+                            }
+                        }
+
+                        //if a match for the units couldn't be found, set them to the error unit to allow normal procedure to continue
+                        //this will be corrected for at the end
+                        if (Conversions[i].unit1 == null)
+                        {
+                            Conversions[i].unit1 = Units[0];
+                        }
+                        if (Conversions[i].unit2 == null)
+                        {
+                            Conversions[i].unit2 = Units[0];
+                        }
+
+                        //convert the value into a double for processing
+                        try
+                        {
+                            Conversions[i].value = Convert.ToDouble(separated[valuepos]);
+                            //check if the number is valid for conversion, if not flag it
+                            if (Conversions[i].value <= 0)
+                            {
+                                Conversions[i].answer = -3;
+                            }
+                        }
+                        //if the value can't be converted/parsed, throw parsing error
+                        catch (FormatException)
+                        {
+                            Conversions[i].answer = -4;
                         }
                     }
-
-                    //if a match for the units couldn't be found, set them to the error unit to allow normal procedure to continue
-                    //this will be corrected for at the end
-                    if (Conversions[i].unit1 == null) {
-                        Conversions[i].unit1 = Units[0];
-                    }
-                    if (Conversions[i].unit2 == null)
-                    {
-                        Conversions[i].unit2 = Units[0];
-                    }
-
-                    Conversions[i].value = Convert.ToDouble(separated[valuepos]);
                 }
             }
 
@@ -223,21 +266,18 @@ namespace COMP1003
                     //if there was a parsing issue in the previous stage
                     if (Conversions[i].answer == -4)
                     {
-                        break;
+                        answer += "Cannot calculate: could not parse input\n";
                     }
                     //if the input value is less than zero
-                    else if (Conversions[i].value <= 0)
+                    else if (Conversions[i].answer == -3)
                     {
-                        Conversions[i].answer = -3;
-
-
-
                         //if this was submitted by a user, exit the program
                         if (Conversions[i].userInput)
                         {
                             answer += "Program exiting.\n";
                             active = false;
                         }
+                        //if not then simply inform the program that the incoming data has goofed up
                         else
                         {
                             answer += "Cannot calculate: value is less than zero\n";
@@ -283,9 +323,11 @@ namespace COMP1003
                             unit2 = Conversions[i].unit2.name;
                         }
 
+                        //write the answer in the following format: "X [unit1]s are Y [unit2]s" followed by a newline character to ensure each is on their own row
                         answer += Conversions[i].value.ToString() + " " + unit1 + "s are " + Conversions[i].answer + " " + unit2 + "s\n";
                     }
                 }
+                //once the whole lot have been parsed and added to the answer string, spit it out on the CMD
                 Console.Write(answer);
             }
         }
@@ -298,15 +340,22 @@ namespace COMP1003
         {
             Converter converter = new Converter();
 
-            converter.readInput("convert.txt");
+            //the setup to read input file
+            //allows the user to specify the name of the file with conversions to be read
+            Console.WriteLine("Please input the name of the file containing conversions:");
+            string input = converter.getInput();
+            Console.Write(Environment.NewLine);
+            converter.readInput(input);
             converter.separate();
             converter.convert();
 
+            //once that's done, we switch to user input
+            //this will loop until termination by setting "active" flag to false
             while (converter.active)
             {
                 Console.WriteLine(Environment.NewLine);
                 Console.WriteLine("Please enter your conversion:");
-                string input = converter.getInput();
+                input = converter.getInput();
                 converter.readInput(input);
                 converter.separate();
                 converter.convert();
